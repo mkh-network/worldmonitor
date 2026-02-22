@@ -14,6 +14,10 @@ import type {
 } from '../../../../src/generated/server/worldmonitor/conflict/v1/service_server';
 
 import { CHROME_UA } from '../../../_shared/constants';
+import { getCachedJson, setCachedJson } from '../../../_shared/redis';
+
+const REDIS_CACHE_KEY = 'conflict:humanitarian:v1';
+const REDIS_CACHE_TTL = 21600; // 6 hr — monthly humanitarian data
 
 const ISO2_TO_ISO3: Record<string, string> = {
   US: 'USA', RU: 'RUS', CN: 'CHN', UA: 'UKR', IR: 'IRN',
@@ -145,8 +149,16 @@ export async function getHumanitarianSummary(
   req: GetHumanitarianSummaryRequest,
 ): Promise<GetHumanitarianSummaryResponse> {
   try {
+    const cacheKey = `${REDIS_CACHE_KEY}:${req.countryCode || 'all'}`;
+    const cached = (await getCachedJson(cacheKey)) as GetHumanitarianSummaryResponse | null;
+    if (cached?.summary) return cached;
+
     const summary = await fetchHapiSummary(req.countryCode);
-    return { summary };
+    const result: GetHumanitarianSummaryResponse = { summary };
+    if (summary) {
+      setCachedJson(cacheKey, result, REDIS_CACHE_TTL).catch(() => {});
+    }
+    return result;
   } catch {
     return { summary: undefined };
   }

@@ -19,6 +19,10 @@ import {
   extractClosePrices,
   extractAlignedPriceVolume,
 } from './_shared';
+import { getCachedJson, setCachedJson } from '../../../_shared/redis';
+
+const REDIS_CACHE_KEY = 'economic:macro-signals:v1';
+const REDIS_CACHE_TTL = 300; // 5 min — matches in-memory TTL
 
 const MACRO_CACHE_TTL = 300; // 5 minutes in seconds
 let macroSignalsCached: GetMacroSignalsResponse | null = null;
@@ -241,10 +245,21 @@ export async function getMacroSignals(
     return macroSignalsCached;
   }
 
+  // Redis shared cache (cross-instance)
+  const redisCached = (await getCachedJson(REDIS_CACHE_KEY)) as GetMacroSignalsResponse | null;
+  if (redisCached && !redisCached.unavailable && redisCached.totalCount > 0) {
+    macroSignalsCached = redisCached;
+    macroSignalsCacheTimestamp = now;
+    return redisCached;
+  }
+
   try {
     const result = await computeMacroSignals();
     macroSignalsCached = result;
     macroSignalsCacheTimestamp = now;
+    if (!result.unavailable) {
+      setCachedJson(REDIS_CACHE_KEY, result, REDIS_CACHE_TTL).catch(() => {});
+    }
     return result;
   } catch {
     const fallback = macroSignalsCached || buildFallbackResult();

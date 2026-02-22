@@ -10,12 +10,22 @@ import type {
   CryptoQuote,
 } from '../../../../src/generated/server/worldmonitor/market/v1/service_server';
 import { CRYPTO_META, fetchCoinGeckoMarkets } from './_shared';
+import { getCachedJson, setCachedJson } from '../../../_shared/redis';
+
+const REDIS_CACHE_KEY = 'market:crypto:v1';
+const REDIS_CACHE_TTL = 180; // 3 min — CoinGecko rate-limited
 
 export async function listCryptoQuotes(
   _ctx: ServerContext,
   req: ListCryptoQuotesRequest,
 ): Promise<ListCryptoQuotesResponse> {
   const ids = req.ids.length > 0 ? req.ids : Object.keys(CRYPTO_META);
+
+  // Redis shared cache
+  const cacheKey = `${REDIS_CACHE_KEY}:${[...ids].sort().join(',')}`;
+  const cached = (await getCachedJson(cacheKey)) as ListCryptoQuotesResponse | null;
+  if (cached?.quotes?.length) return cached;
+
   const items = await fetchCoinGeckoMarkets(ids);
 
   if (items.length === 0) {
@@ -45,5 +55,7 @@ export async function listCryptoQuotes(
     throw new Error('CoinGecko returned all-zero prices');
   }
 
-  return { quotes };
+  const result: ListCryptoQuotesResponse = { quotes };
+  setCachedJson(cacheKey, result, REDIS_CACHE_TTL).catch(() => {});
+  return result;
 }

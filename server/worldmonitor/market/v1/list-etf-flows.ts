@@ -11,10 +11,14 @@ import type {
 } from '../../../../src/generated/server/worldmonitor/market/v1/service_server';
 import { UPSTREAM_TIMEOUT_MS, type YahooChartResponse } from './_shared';
 import { CHROME_UA, yahooGate } from '../../../_shared/constants';
+import { getCachedJson, setCachedJson } from '../../../_shared/redis';
 
 // ========================================================================
 // Constants and cache
 // ========================================================================
+
+const REDIS_CACHE_KEY = 'market:etf-flows:v1';
+const REDIS_CACHE_TTL = 600; // 10 min — daily volume data, slow-moving
 
 const ETF_LIST = [
   { ticker: 'IBIT', issuer: 'BlackRock' },
@@ -31,7 +35,7 @@ const ETF_LIST = [
 
 let etfCache: ListEtfFlowsResponse | null = null;
 let etfCacheTimestamp = 0;
-const ETF_CACHE_TTL = 900_000; // 15 minutes
+const ETF_CACHE_TTL = 900_000; // 15 minutes (in-memory fallback)
 
 // ========================================================================
 // Helpers
@@ -110,6 +114,14 @@ export async function listEtfFlows(
     return etfCache;
   }
 
+  // Redis shared cache (cross-instance)
+  const redisCached = (await getCachedJson(REDIS_CACHE_KEY)) as ListEtfFlowsResponse | null;
+  if (redisCached?.etfs?.length) {
+    etfCache = redisCached;
+    etfCacheTimestamp = now;
+    return redisCached;
+  }
+
   try {
     const charts: PromiseSettledResult<YahooChartResponse | null>[] = [];
     for (const etf of ETF_LIST) {
@@ -154,6 +166,7 @@ export async function listEtfFlows(
     if (etfs.length > 0) {
       etfCache = result;
       etfCacheTimestamp = now;
+      setCachedJson(REDIS_CACHE_KEY, result, REDIS_CACHE_TTL).catch(() => {});
     }
     return result;
   } catch {

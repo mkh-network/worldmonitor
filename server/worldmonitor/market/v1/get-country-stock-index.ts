@@ -10,6 +10,7 @@ import type {
 } from '../../../../src/generated/server/worldmonitor/market/v1/service_server';
 import { UPSTREAM_TIMEOUT_MS, type YahooChartResponse } from './_shared';
 import { CHROME_UA } from '../../../_shared/constants';
+import { getCachedJson, setCachedJson } from '../../../_shared/redis';
 
 // ========================================================================
 // Country-to-index mapping
@@ -67,8 +68,11 @@ const COUNTRY_INDEX: Record<string, { symbol: string; name: string }> = {
 // Cache
 // ========================================================================
 
+const REDIS_CACHE_KEY = 'market:stock-index:v1';
+const REDIS_CACHE_TTL = 1800; // 30 min — weekly data, slow-moving
+
 let stockIndexCache: Record<string, { data: GetCountryStockIndexResponse; ts: number }> = {};
-const STOCK_INDEX_CACHE_TTL = 3_600_000; // 1 hour
+const STOCK_INDEX_CACHE_TTL = 3_600_000; // 1 hour (in-memory fallback)
 
 // ========================================================================
 // Handler
@@ -90,6 +94,14 @@ export async function getCountryStockIndex(
 
   const cached = stockIndexCache[code];
   if (cached && Date.now() - cached.ts < STOCK_INDEX_CACHE_TTL) return cached.data;
+
+  // Layer 2: Redis shared cache (cross-instance)
+  const redisKey = `${REDIS_CACHE_KEY}:${code}`;
+  const redisCached = (await getCachedJson(redisKey)) as GetCountryStockIndexResponse | null;
+  if (redisCached?.available) {
+    stockIndexCache[code] = { data: redisCached, ts: Date.now() };
+    return redisCached;
+  }
 
   try {
     const encodedSymbol = encodeURIComponent(index.symbol);
@@ -127,6 +139,7 @@ export async function getCountryStockIndex(
     };
 
     stockIndexCache[code] = { data: payload, ts: Date.now() };
+    setCachedJson(redisKey, payload, REDIS_CACHE_TTL).catch(() => {});
     return payload;
   } catch {
     return notAvailable;

@@ -7,6 +7,10 @@ import type {
 
 import { UPSTREAM_TIMEOUT_MS } from './_shared';
 import { CHROME_UA } from '../../../_shared/constants';
+import { getCachedJson, setCachedJson } from '../../../_shared/redis';
+
+const REDIS_CACHE_KEY = 'intel:gdelt-docs:v1';
+const REDIS_CACHE_TTL = 600; // 10 min
 
 // ========================================================================
 // Constants
@@ -36,6 +40,10 @@ export async function searchGdeltDocuments(
   const timespan = req.timespan || '72h';
 
   try {
+    const cacheKey = `${REDIS_CACHE_KEY}:${query}:${timespan}:${maxRecords}`;
+    const cached = (await getCachedJson(cacheKey)) as SearchGdeltDocumentsResponse | null;
+    if (cached?.articles?.length) return cached;
+
     const gdeltUrl = new URL(GDELT_DOC_API);
     gdeltUrl.searchParams.set('query', query);
     gdeltUrl.searchParams.set('mode', 'artlist');
@@ -76,7 +84,11 @@ export async function searchGdeltDocuments(
       tone: typeof article.tone === 'number' ? article.tone : 0,
     }));
 
-    return { articles, query, error: '' };
+    const result: SearchGdeltDocumentsResponse = { articles, query, error: '' };
+    if (articles.length > 0) {
+      setCachedJson(cacheKey, result, REDIS_CACHE_TTL).catch(() => {});
+    }
+    return result;
   } catch (error) {
     return {
       articles: [],

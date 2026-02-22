@@ -63,10 +63,11 @@ struct SecretsCache {
 
 /// In-memory mirror of persistent-cache.json. The file can grow to 10+ MB,
 /// so reading/parsing/writing it on every IPC call blocks the main thread.
-/// Instead, load once into RAM and flush dirty writes via a background task.
+/// Instead, load once into RAM and serialize writes to preserve ordering.
 struct PersistentCache {
     data: Mutex<Map<String, Value>>,
     dirty: Mutex<bool>,
+    write_lock: Mutex<()>,
 }
 
 impl SecretsCache {
@@ -134,6 +135,7 @@ impl PersistentCache {
         PersistentCache {
             data: Mutex::new(data),
             dirty: Mutex::new(false),
+            write_lock: Mutex::new(()),
         }
     }
 
@@ -142,24 +144,25 @@ impl PersistentCache {
         data.get(key).cloned()
     }
 
-    fn set(&self, key: String, value: Value) {
-        let mut data = self.data.lock().unwrap_or_else(|e| e.into_inner());
-        data.insert(key, value);
-        let mut dirty = self.dirty.lock().unwrap_or_else(|e| e.into_inner());
-        *dirty = true;
-    }
-
     /// Flush to disk only if dirty. Returns Ok(true) if written.
     fn flush(&self, path: &Path) -> Result<bool, String> {
-        let mut dirty = self.dirty.lock().unwrap_or_else(|e| e.into_inner());
-        if !*dirty {
+        let _write_guard = self.write_lock.lock().unwrap_or_else(|e| e.into_inner());
+
+        let is_dirty = {
+            let dirty = self.dirty.lock().unwrap_or_else(|e| e.into_inner());
+            *dirty
+        };
+        if !is_dirty {
             return Ok(false);
         }
+
         let data = self.data.lock().unwrap_or_else(|e| e.into_inner());
         let serialized = serde_json::to_string(&Value::Object(data.clone()))
             .map_err(|e| format!("Failed to serialize cache: {e}"))?;
+        drop(data);
         std::fs::write(path, serialized)
             .map_err(|e| format!("Failed to write cache {}: {e}", path.display()))?;
+        let mut dirty = self.dirty.lock().unwrap_or_else(|e| e.into_inner());
         *dirty = false;
         Ok(true)
     }
@@ -285,10 +288,17 @@ fn read_cache_entry(cache: tauri::State<'_, PersistentCache>, key: String) -> Re
 fn write_cache_entry(app: AppHandle, cache: tauri::State<'_, PersistentCache>, key: String, value: String) -> Result<(), String> {
     let parsed_value: Value = serde_json::from_str(&value)
         .map_err(|e| format!("Invalid cache payload JSON: {e}"))?;
-    cache.set(key, parsed_value);
+    let _write_guard = cache.write_lock.lock().unwrap_or_else(|e| e.into_inner());
+    {
+        let mut data = cache.data.lock().unwrap_or_else(|e| e.into_inner());
+        data.insert(key, parsed_value);
+    }
+    {
+        let mut dirty = cache.dirty.lock().unwrap_or_else(|e| e.into_inner());
+        *dirty = true;
+    }
 
-    // Flush synchronously — JSON file write is fast and avoids race conditions
-    // where out-of-order background threads overwrite newer data.
+    // Flush synchronously under write lock so concurrent writes cannot reorder.
     let path = cache_file_path(&app)?;
     let data = cache.data.lock().unwrap_or_else(|e| e.into_inner());
     let serialized = serde_json::to_string(&Value::Object(data.clone()))

@@ -13,6 +13,10 @@ import type {
 } from '../../../../src/generated/server/worldmonitor/research/v1/service_server';
 
 import { CHROME_UA } from '../../../_shared/constants';
+import { getCachedJson, setCachedJson } from '../../../_shared/redis';
+
+const REDIS_CACHE_KEY = 'research:hackernews:v1';
+const REDIS_CACHE_TTL = 600; // 10 min
 
 // ---------- Constants ----------
 
@@ -82,8 +86,17 @@ export async function listHackernewsItems(
   req: ListHackernewsItemsRequest,
 ): Promise<ListHackernewsItemsResponse> {
   try {
+    const feedType = ALLOWED_HN_FEEDS.has(req.feedType) ? req.feedType : 'top';
+    const cacheKey = `${REDIS_CACHE_KEY}:${feedType}:${req.pagination?.pageSize || 30}`;
+    const cached = (await getCachedJson(cacheKey)) as ListHackernewsItemsResponse | null;
+    if (cached?.items?.length) return cached;
+
     const items = await fetchHackernewsItems(req);
-    return { items, pagination: undefined };
+    const result: ListHackernewsItemsResponse = { items, pagination: undefined };
+    if (items.length > 0) {
+      setCachedJson(cacheKey, result, REDIS_CACHE_TTL).catch(() => {});
+    }
+    return result;
   } catch {
     return { items: [], pagination: undefined };
   }

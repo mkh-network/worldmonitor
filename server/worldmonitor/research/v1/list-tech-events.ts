@@ -20,6 +20,10 @@ import type {
 } from '../../../../src/generated/server/worldmonitor/research/v1/service_server';
 import { CITY_COORDS } from '../../../../api/data/city-coords';
 import { CHROME_UA } from '../../../_shared/constants';
+import { getCachedJson, setCachedJson } from '../../../_shared/redis';
+
+const REDIS_CACHE_KEY = 'research:tech-events:v1';
+const REDIS_CACHE_TTL = 21600; // 6 hr — weekly event data
 
 // ---------- Constants ----------
 
@@ -349,7 +353,15 @@ export async function listTechEvents(
   req: ListTechEventsRequest,
 ): Promise<ListTechEventsResponse> {
   try {
-    return await fetchTechEvents(req);
+    const cacheKey = `${REDIS_CACHE_KEY}:${req.type || 'all'}:${req.mappable ? 1 : 0}:${req.days || 0}`;
+    const cached = (await getCachedJson(cacheKey)) as ListTechEventsResponse | null;
+    if (cached?.events?.length) return cached;
+
+    const result = await fetchTechEvents(req);
+    if (result.events.length > 0) {
+      setCachedJson(cacheKey, result, REDIS_CACHE_TTL).catch(() => {});
+    }
+    return result;
   } catch (error) {
     return {
       success: false,

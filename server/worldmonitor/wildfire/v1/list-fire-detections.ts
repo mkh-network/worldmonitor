@@ -18,6 +18,10 @@ import type {
 } from '../../../../src/generated/server/worldmonitor/wildfire/v1/service_server';
 
 import { CHROME_UA } from '../../../_shared/constants';
+import { getCachedJson, setCachedJson } from '../../../_shared/redis';
+
+const REDIS_CACHE_KEY = 'wildfire:fires:v1';
+const REDIS_CACHE_TTL = 1800; // 30 min — daily FIRMS data
 
 const FIRMS_SOURCE = 'VIIRS_SNPP_NRT';
 
@@ -93,6 +97,10 @@ export const listFireDetections: WildfireServiceHandler['listFireDetections'] = 
     return { fireDetections: [], pagination: undefined };
   }
 
+  // Redis shared cache (cross-instance)
+  const cached = (await getCachedJson(REDIS_CACHE_KEY)) as ListFireDetectionsResponse | null;
+  if (cached?.fireDetections?.length) return cached;
+
   const entries = Object.entries(MONITORED_REGIONS);
 
   const results = await Promise.allSettled(
@@ -141,5 +149,9 @@ export const listFireDetections: WildfireServiceHandler['listFireDetections'] = 
     }
   }
 
-  return { fireDetections, pagination: undefined };
+  const result: ListFireDetectionsResponse = { fireDetections, pagination: undefined };
+  if (fireDetections.length > 0) {
+    setCachedJson(REDIS_CACHE_KEY, result, REDIS_CACHE_TTL).catch(() => {});
+  }
+  return result;
 };

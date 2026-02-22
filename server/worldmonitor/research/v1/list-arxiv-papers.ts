@@ -7,6 +7,10 @@
 
 import { XMLParser } from 'fast-xml-parser';
 import { CHROME_UA } from '../../../_shared/constants';
+import { getCachedJson, setCachedJson } from '../../../_shared/redis';
+
+const REDIS_CACHE_KEY = 'research:arxiv:v1';
+const REDIS_CACHE_TTL = 3600; // 1 hr — daily arXiv updates
 import type {
   ServerContext,
   ListArxivPapersRequest,
@@ -88,8 +92,16 @@ export async function listArxivPapers(
   req: ListArxivPapersRequest,
 ): Promise<ListArxivPapersResponse> {
   try {
+    const cacheKey = `${REDIS_CACHE_KEY}:${req.category || 'cs.AI'}:${req.query || ''}:${req.pagination?.pageSize || 50}`;
+    const cached = (await getCachedJson(cacheKey)) as ListArxivPapersResponse | null;
+    if (cached?.papers?.length) return cached;
+
     const papers = await fetchArxivPapers(req);
-    return { papers, pagination: undefined };
+    const result: ListArxivPapersResponse = { papers, pagination: undefined };
+    if (papers.length > 0) {
+      setCachedJson(cacheKey, result, REDIS_CACHE_TTL).catch(() => {});
+    }
+    return result;
   } catch {
     return { papers: [], pagination: undefined };
   }

@@ -11,6 +11,10 @@ import type {
 
 import { UPSTREAM_TIMEOUT_MS } from './_shared';
 import { CHROME_UA } from '../../../_shared/constants';
+import { getCachedJson, setCachedJson } from '../../../_shared/redis';
+
+const REDIS_CACHE_KEY = 'intel:pizzint:v1';
+const REDIS_CACHE_TTL = 600; // 10 min
 
 // ========================================================================
 // Constants
@@ -28,6 +32,11 @@ export async function getPizzintStatus(
   _ctx: ServerContext,
   req: GetPizzintStatusRequest,
 ): Promise<GetPizzintStatusResponse> {
+  // Redis shared cache
+  const cacheKey = `${REDIS_CACHE_KEY}:${req.includeGdelt ? 'gdelt' : 'base'}`;
+  const cached = (await getCachedJson(cacheKey)) as GetPizzintStatusResponse | null;
+  if (cached?.pizzint) return cached;
+
   // Fetch PizzINT dashboard data — throw on failure so sidecar returns non-OK
   // and the runtime fetch patch falls back to cloud
   let pizzint: PizzintStatus | undefined;
@@ -142,5 +151,9 @@ export async function getPizzintStatus(
     } catch { /* gdelt unavailable */ }
   }
 
-  return { pizzint, tensionPairs };
+  const result: GetPizzintStatusResponse = { pizzint, tensionPairs };
+  if (pizzint) {
+    setCachedJson(cacheKey, result, REDIS_CACHE_TTL).catch(() => {});
+  }
+  return result;
 }
