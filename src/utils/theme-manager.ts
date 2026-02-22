@@ -54,8 +54,11 @@ export function setTheme(theme: Theme): void {
  */
 export function applyStoredTheme(): void {
   const theme = getStoredTheme();
-  if (theme !== DEFAULT_THEME) {
-    document.documentElement.dataset.theme = theme;
+  // Happy variant defaults to light appearance — ensure data-theme matches
+  const variant = document.documentElement.dataset.variant;
+  const effective = theme === DEFAULT_THEME && variant === 'happy' ? 'light' : theme;
+  if (effective !== DEFAULT_THEME) {
+    document.documentElement.dataset.theme = effective;
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     if (meta) {
       meta.content = '#f8f9fa';

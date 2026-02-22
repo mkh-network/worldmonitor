@@ -180,11 +180,12 @@ function htmlVariantPlugin(): Plugin {
         );
       }
 
-      // Inject build-time variant into the inline script so data-variant is set before CSS loads
+      // Inject build-time variant into the inline script so data-variant is set before CSS loads.
+      // Force the variant (don't let stale localStorage override the build-time setting).
       if (activeVariant !== 'full') {
         result = result.replace(
           /if\(v\)document\.documentElement\.dataset\.variant=v;/,
-          `if(!v)v='${activeVariant}';if(v)document.documentElement.dataset.variant=v;`
+          `v='${activeVariant}';document.documentElement.dataset.variant=v;`
         );
       }
 

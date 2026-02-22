@@ -1,7 +1,8 @@
 /* ============================================================
    Happy Variant Theme — Calm & Serene
    Sage green + warm gold on cream. No dark military aesthetic.
-   Imported AFTER main.css in main.ts so cascade order wins.
+   Unlayered CSS — wins over main.css which is wrapped in
+   @layer base by base-layer.css (@import ... layer(base)).
    ============================================================ */
 
 /* ---------- Happy Light Mode (default + explicit light) ---------- */
