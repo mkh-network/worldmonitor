@@ -5,33 +5,34 @@
 See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** Every piece of content on the dashboard makes the viewer feel genuinely better about humanity
-**Current focus:** Phase 1 COMPLETE - Ready for Phase 2
+**Current focus:** Phase 2 in progress - Curated Content Pipeline
 
 ## Current Position
 
-Phase: 1 of 9 (Variant Shell & Visual Foundation) -- COMPLETE
-Plan: 3 of 3 in current phase (all done)
-Status: Phase Complete
-Last activity: 2026-02-22 -- Completed 01-03-PLAN.md (Map Basemap & Panel Chrome)
+Phase: 2 of 9 (Curated Content Pipeline)
+Plan: 1 of 2 in current phase (02-01 complete)
+Status: In Progress
+Last activity: 2026-02-22 -- Completed 02-01-PLAN.md (Positive Feeds & GDELT Tone Filtering)
 
-Progress: [###.......] 33%
+Progress: [####......] 44%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 40 min
-- Total execution time: 2.0 hours
+- Total plans completed: 4
+- Average duration: 31 min
+- Total execution time: 2.05 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 3 | 120 min | 40 min |
+| 02 | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 5m, 2m, 113m
-- Trend: Plan 03 longer due to CSS cascade debugging + human verification checkpoint
+- Last 5 plans: 5m, 2m, 113m, 3m
+- Trend: 02-01 fast -- straightforward config + proto extension, no CSS debugging
 
 *Updated after each plan completion*
 
@@ -54,6 +55,9 @@ Recent decisions affecting current work:
 - [01-03]: CSS @layer base introduced to control cascade -- happy-theme overrides sit outside @layer so they always win over :root defaults.
 - [01-03]: data-variant attribute set on <html> from SITE_VARIANT enables pure-CSS variant scoping without runtime JS.
 - [01-03]: Self-hosted MapLibre style JSONs with CARTO CDN tile sources -- pattern for per-variant basemaps.
+- [02-01]: 8 feeds from 4 verified positive sources (GNN, Positive.News, Reasons to be Cheerful, Optimist Daily) -- unverified sources excluded.
+- [02-01]: GDELT tone_filter appended server-side to query string, sort param replaces hardcoded 'date' -- backward compatible with empty defaults.
+- [02-01]: Existing fetchGdeltArticles() passes empty toneFilter/sort to satisfy generated type requirements without changing behavior.
 
 ### Pending Todos
 
@@ -62,11 +66,11 @@ None yet.
 ### Blockers/Concerns
 
 - MEDIUM risk: Sentiment threshold (0.85) is a hypothesis -- needs experimentation during Phase 3.
-- LOW risk: Positive.News, Future Crunch RSS URLs not verified programmatically -- test at Phase 2 implementation.
+- LOW risk: Positive.News RSS added in 02-01 (URL verified). Future Crunch excluded (unverified RSS URL).
 - LOW risk: @huggingface/transformers v4 preview dropped Feb 2026 -- do NOT use, stick with existing v2/v3 stable.
 
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 01-03-PLAN.md -- Phase 1 COMPLETE
-Resume file: .planning/phases/01-variant-shell-visual-foundation/01-03-SUMMARY.md
+Stopped at: Completed 02-01-PLAN.md (Positive Feeds & GDELT Tone Filtering)
+Resume file: .planning/phases/02-curated-content-pipeline/02-01-SUMMARY.md

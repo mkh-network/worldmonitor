@@ -24,9 +24,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Content Pipeline
 
-- [ ] **FEED-01**: Dedicated positive news RSS feeds integrated (Good News Network, Positive.News, Reasons to be Cheerful, Optimist Daily, SunnySkyz, The Better India, Future Crunch)
+- [x] **FEED-01**: Dedicated positive news RSS feeds integrated (Good News Network, Positive.News, Reasons to be Cheerful, Optimist Daily, SunnySkyz, The Better India, Future Crunch)
 - [ ] **FEED-02**: AI sentiment filter using existing DistilBERT-SST2 to gate mixed-source feeds, only passing positive stories (score >= 0.85 threshold)
-- [ ] **FEED-03**: GDELT positive tone filter — extend existing GDELT integration with `tone>5` parameter for positive global news
+- [x] **FEED-03**: GDELT positive tone filter — extend existing GDELT integration with `tone>5` parameter for positive global news
 - [ ] **FEED-04**: Content categories defined and mapped: Science & Health, Nature & Wildlife, Humanity & Kindness, Innovation & Tech, Climate Wins, Culture & Community
 - [ ] **FEED-05**: Multi-stage content quality pipeline: curated sources as primary, sentiment-filtered mainstream as supplement, confidence threshold to minimize false positives
 
@@ -141,9 +141,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | THEME-04 | Phase 1 | Complete |
 | THEME-05 | Phase 1 | Complete |
 | THEME-06 | Phase 9 | Pending |
-| FEED-01 | Phase 2 | Pending |
+| FEED-01 | Phase 2 | Complete |
 | FEED-02 | Phase 3 | Pending |
-| FEED-03 | Phase 2 | Pending |
+| FEED-03 | Phase 2 | Complete |
 | FEED-04 | Phase 2 | Pending |
 | FEED-05 | Phase 3 | Pending |
 | NEWS-01 | Phase 3 | Pending |
