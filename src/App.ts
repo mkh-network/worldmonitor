@@ -109,6 +109,7 @@ import { TvModeController } from '@/services/tv-mode';
 import { fetchProgressData } from '@/services/progress-data';
 import { fetchConservationWins } from '@/services/conservation-data';
 import { fetchRenewableEnergyData, fetchEnergyCapacity } from '@/services/renewable-energy-data';
+import { checkMilestones } from '@/services/celebration';
 import { fetchHappinessScores } from '@/services/happiness-data';
 import { fetchRenewableInstallations } from '@/services/renewable-installations';
 import { filterBySentiment } from '@/services/sentiment-gate';
@@ -3861,11 +3862,24 @@ export class App {
     this.speciesPanel?.setData(species);
     // Phase 8: also send to map for species recovery zone overlay
     this.map?.setSpeciesRecoveryZones(species);
+    // Phase 9: celebrate species recovery milestones
+    if (SITE_VARIANT === 'happy' && species.length > 0) {
+      checkMilestones({
+        speciesRecoveries: species.map(s => ({ name: s.commonName, status: s.recoveryStatus })),
+        newSpeciesCount: species.length,
+      });
+    }
   }
 
   private async loadRenewableData(): Promise<void> {
     const data = await fetchRenewableEnergyData();
     this.renewablePanel?.setData(data);
+    // Phase 9: celebrate renewable energy record milestones
+    if (SITE_VARIANT === 'happy' && data?.globalPercentage) {
+      checkMilestones({
+        renewablePercent: data.globalPercentage,
+      });
+    }
 
     // EIA capacity data (solar/wind growth, coal decline) — independent of World Bank gauge
     try {
