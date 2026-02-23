@@ -25,14 +25,26 @@ if (!API_KEY) {
 }
 
 const MAX_WS_CLIENTS = 10; // Cap WS clients — app uses HTTP snapshots, not WS
-const UPSTREAM_HIGH_WATER = 4 * 1024 * 1024; // 4 MB — pause upstream if buffered
-const UPSTREAM_LOW_WATER = 512 * 1024; // resume when drained below this
+const UPSTREAM_QUEUE_HIGH_WATER = Math.max(500, Number(process.env.AIS_UPSTREAM_QUEUE_HIGH_WATER || 4000));
+const UPSTREAM_QUEUE_LOW_WATER = Math.max(
+  100,
+  Math.min(UPSTREAM_QUEUE_HIGH_WATER - 1, Number(process.env.AIS_UPSTREAM_QUEUE_LOW_WATER || 1000))
+);
+const UPSTREAM_QUEUE_HARD_CAP = Math.max(
+  UPSTREAM_QUEUE_HIGH_WATER + 1,
+  Number(process.env.AIS_UPSTREAM_QUEUE_HARD_CAP || 8000)
+);
+const UPSTREAM_DRAIN_BATCH = Math.max(1, Number(process.env.AIS_UPSTREAM_DRAIN_BATCH || 250));
+const UPSTREAM_DRAIN_BUDGET_MS = Math.max(2, Number(process.env.AIS_UPSTREAM_DRAIN_BUDGET_MS || 20));
 const MAX_VESSELS = 50000; // hard cap on vessels Map
 const MAX_VESSEL_HISTORY = 50000;
 const MAX_DENSITY_CELLS = 5000;
 
 let upstreamSocket = null;
 let upstreamPaused = false;
+let upstreamQueue = [];
+let upstreamQueueReadIndex = 0;
+let upstreamDrainScheduled = false;
 let clients = new Set();
 let messageCount = 0;
 let droppedMessages = 0;
@@ -103,6 +115,7 @@ let lastSnapshotWithCandGzip = null;
 // Chokepoint spatial index: bucket vessels into grid cells at ingest time
 // instead of O(chokepoints * vessels) on every snapshot
 const chokepointBuckets = new Map(); // key: gridKey -> Set of MMSI
+const vesselChokepoints = new Map(); // key: MMSI -> Set of chokepoint names
 
 const CHOKEPOINTS = [
   { name: 'Strait of Hormuz', lat: 26.5, lon: 56.5, radius: 2 },
@@ -140,6 +153,121 @@ function isLikelyMilitaryCandidate(meta) {
   }
 
   return false;
+}
+
+function getUpstreamQueueSize() {
+  return upstreamQueue.length - upstreamQueueReadIndex;
+}
+
+function enqueueUpstreamMessage(raw) {
+  upstreamQueue.push(raw);
+}
+
+function dequeueUpstreamMessage() {
+  if (upstreamQueueReadIndex >= upstreamQueue.length) return null;
+  const raw = upstreamQueue[upstreamQueueReadIndex++];
+  // Compact queue periodically to avoid unbounded sparse arrays.
+  if (upstreamQueueReadIndex >= 1024 && upstreamQueueReadIndex * 2 >= upstreamQueue.length) {
+    upstreamQueue = upstreamQueue.slice(upstreamQueueReadIndex);
+    upstreamQueueReadIndex = 0;
+  }
+  return raw;
+}
+
+function clearUpstreamQueue() {
+  upstreamQueue = [];
+  upstreamQueueReadIndex = 0;
+  upstreamDrainScheduled = false;
+}
+
+function evictMapByTimestamp(map, maxSize, getTimestamp) {
+  if (map.size <= maxSize) return;
+  const sorted = [...map.entries()].sort((a, b) => {
+    const tsA = Number(getTimestamp(a[1])) || 0;
+    const tsB = Number(getTimestamp(b[1])) || 0;
+    return tsA - tsB;
+  });
+  const removeCount = map.size - maxSize;
+  for (let i = 0; i < removeCount; i++) {
+    map.delete(sorted[i][0]);
+  }
+}
+
+function removeVesselFromChokepoints(mmsi) {
+  const previous = vesselChokepoints.get(mmsi);
+  if (!previous) return;
+
+  for (const cpName of previous) {
+    const bucket = chokepointBuckets.get(cpName);
+    if (!bucket) continue;
+    bucket.delete(mmsi);
+    if (bucket.size === 0) chokepointBuckets.delete(cpName);
+  }
+
+  vesselChokepoints.delete(mmsi);
+}
+
+function updateVesselChokepoints(mmsi, lat, lon) {
+  const next = new Set();
+  for (const cp of CHOKEPOINTS) {
+    const dlat = lat - cp.lat;
+    const dlon = lon - cp.lon;
+    if (dlat * dlat + dlon * dlon <= cp.radius * cp.radius) {
+      next.add(cp.name);
+    }
+  }
+
+  const previous = vesselChokepoints.get(mmsi) || new Set();
+  for (const cpName of previous) {
+    if (next.has(cpName)) continue;
+    const bucket = chokepointBuckets.get(cpName);
+    if (!bucket) continue;
+    bucket.delete(mmsi);
+    if (bucket.size === 0) chokepointBuckets.delete(cpName);
+  }
+
+  for (const cpName of next) {
+    let bucket = chokepointBuckets.get(cpName);
+    if (!bucket) {
+      bucket = new Set();
+      chokepointBuckets.set(cpName, bucket);
+    }
+    bucket.add(mmsi);
+  }
+
+  if (next.size === 0) vesselChokepoints.delete(mmsi);
+  else vesselChokepoints.set(mmsi, next);
+}
+
+function processRawUpstreamMessage(raw) {
+  messageCount++;
+  if (messageCount % 5000 === 0) {
+    const mem = process.memoryUsage();
+    console.log(`[Relay] ${messageCount} msgs, ${clients.size} ws-clients, ${vessels.size} vessels, queue=${getUpstreamQueueSize()}, dropped=${droppedMessages}, rss=${(mem.rss / 1024 / 1024).toFixed(0)}MB heap=${(mem.heapUsed / 1024 / 1024).toFixed(0)}MB, cache: opensky=${openskyResponseCache.size} rss_feed=${rssResponseCache.size}`);
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed?.MessageType === 'PositionReport') {
+      processPositionReportForSnapshot(parsed);
+    }
+  } catch {
+    // Ignore malformed upstream payloads
+  }
+
+  // Heavily throttled WS fanout: every 50th message only
+  // The app primarily uses HTTP snapshot polling, WS is for rare external consumers
+  if (clients.size > 0 && messageCount % 50 === 0) {
+    const message = raw.toString();
+    for (const client of clients) {
+      if (client.readyState === WebSocket.OPEN) {
+        // Per-client backpressure: skip if client buffer is backed up
+        if (client.bufferedAmount < 1024 * 1024) {
+          client.send(message);
+        }
+      }
+    }
+  }
 }
 
 function processPositionReportForSnapshot(data) {
@@ -188,16 +316,8 @@ function processPositionReportForSnapshot(data) {
   cell.vessels.add(mmsi);
   cell.lastUpdate = now;
 
-  // Update chokepoint spatial index: assign vessel to nearby chokepoints
-  for (const cp of CHOKEPOINTS) {
-    const dlat = lat - cp.lat;
-    const dlon = lon - cp.lon;
-    if (dlat * dlat + dlon * dlon <= cp.radius * cp.radius) {
-      let bucket = chokepointBuckets.get(cp.name);
-      if (!bucket) { bucket = new Set(); chokepointBuckets.set(cp.name, bucket); }
-      bucket.add(mmsi);
-    }
-  }
+  // Maintain exact chokepoint membership so moving vessels don't get "stuck" in old buckets.
+  updateVesselChokepoints(mmsi, lat, lon);
 
   if (isLikelyMilitaryCandidate(meta)) {
     candidateReports.set(mmsi, {
@@ -221,13 +341,17 @@ function cleanupAggregates() {
   for (const [mmsi, vessel] of vessels) {
     if (vessel.timestamp < cutoff) {
       vessels.delete(mmsi);
+      removeVesselFromChokepoints(mmsi);
     }
   }
   // Hard cap: if still over limit, evict oldest
   if (vessels.size > MAX_VESSELS) {
     const sorted = [...vessels.entries()].sort((a, b) => a[1].timestamp - b[1].timestamp);
     const toRemove = sorted.slice(0, vessels.size - MAX_VESSELS);
-    for (const [mmsi] of toRemove) vessels.delete(mmsi);
+    for (const [mmsi] of toRemove) {
+      vessels.delete(mmsi);
+      removeVesselFromChokepoints(mmsi);
+    }
   }
 
   for (const [mmsi, history] of vesselHistory) {
@@ -238,13 +362,8 @@ function cleanupAggregates() {
       vesselHistory.set(mmsi, filtered);
     }
   }
-  // Hard cap
-  if (vesselHistory.size > MAX_VESSEL_HISTORY) {
-    let count = 0;
-    for (const key of vesselHistory.keys()) {
-      if (count++ >= MAX_VESSEL_HISTORY) vesselHistory.delete(key);
-    }
-  }
+  // Hard cap: keep the most recent vessel histories.
+  evictMapByTimestamp(vesselHistory, MAX_VESSEL_HISTORY, (history) => history[history.length - 1] || 0);
 
   for (const [key, cell] of densityGrid) {
     cell.previousCount = cell.vessels.size;
@@ -260,31 +379,27 @@ function cleanupAggregates() {
       densityGrid.delete(key);
     }
   }
-  // Hard cap on density grid
-  if (densityGrid.size > MAX_DENSITY_CELLS) {
-    let count = 0;
-    for (const key of densityGrid.keys()) {
-      if (count++ >= MAX_DENSITY_CELLS) densityGrid.delete(key);
-    }
-  }
+  // Hard cap: keep the most recently updated cells.
+  evictMapByTimestamp(densityGrid, MAX_DENSITY_CELLS, (cell) => cell.lastUpdate || 0);
 
   for (const [mmsi, report] of candidateReports) {
     if (report.timestamp < now - CANDIDATE_RETENTION_MS) {
       candidateReports.delete(mmsi);
     }
   }
-  // Cap candidate reports
-  if (candidateReports.size > MAX_CANDIDATE_REPORTS) {
-    let count = 0;
-    for (const key of candidateReports.keys()) {
-      if (count++ >= MAX_CANDIDATE_REPORTS) candidateReports.delete(key);
-    }
-  }
+  // Hard cap: keep freshest candidate reports.
+  evictMapByTimestamp(candidateReports, MAX_CANDIDATE_REPORTS, (report) => report.timestamp || 0);
 
   // Clean chokepoint buckets: remove stale vessels
   for (const [cpName, bucket] of chokepointBuckets) {
     for (const mmsi of bucket) {
-      if (!vessels.has(mmsi)) bucket.delete(mmsi);
+      if (vessels.has(mmsi)) continue;
+      bucket.delete(mmsi);
+      const memberships = vesselChokepoints.get(mmsi);
+      if (memberships) {
+        memberships.delete(cpName);
+        if (memberships.size === 0) vesselChokepoints.delete(mmsi);
+      }
     }
     if (bucket.size === 0) chokepointBuckets.delete(cpName);
   }
@@ -1489,6 +1604,48 @@ function connectUpstream() {
   console.log('[Relay] Connecting to aisstream.io...');
   const socket = new WebSocket(AISSTREAM_URL);
   upstreamSocket = socket;
+  clearUpstreamQueue();
+  upstreamPaused = false;
+
+  const scheduleUpstreamDrain = () => {
+    if (upstreamDrainScheduled) return;
+    upstreamDrainScheduled = true;
+    setImmediate(drainUpstreamQueue);
+  };
+
+  const drainUpstreamQueue = () => {
+    if (upstreamSocket !== socket) {
+      clearUpstreamQueue();
+      upstreamPaused = false;
+      return;
+    }
+
+    upstreamDrainScheduled = false;
+    const startedAt = Date.now();
+    let processed = 0;
+
+    while (processed < UPSTREAM_DRAIN_BATCH &&
+           getUpstreamQueueSize() > 0 &&
+           Date.now() - startedAt < UPSTREAM_DRAIN_BUDGET_MS) {
+      const raw = dequeueUpstreamMessage();
+      if (!raw) break;
+      processRawUpstreamMessage(raw);
+      processed++;
+    }
+
+    const queueSize = getUpstreamQueueSize();
+    if (queueSize >= UPSTREAM_QUEUE_HIGH_WATER && !upstreamPaused) {
+      upstreamPaused = true;
+      socket.pause();
+      console.warn(`[Relay] Upstream paused (queue=${queueSize}, dropped=${droppedMessages})`);
+    } else if (upstreamPaused && queueSize <= UPSTREAM_QUEUE_LOW_WATER) {
+      upstreamPaused = false;
+      socket.resume();
+      console.log(`[Relay] Upstream resumed (queue=${queueSize})`);
+    }
+
+    if (queueSize > 0) scheduleUpstreamDrain();
+  };
 
   socket.on('open', () => {
     // Verify this socket is still the current one (race condition guard)
@@ -1508,57 +1665,26 @@ function connectUpstream() {
   socket.on('message', (data) => {
     if (upstreamSocket !== socket) return;
 
-    // Backpressure: if we're accumulating too much buffered data, drop messages
-    if (socket.bufferedAmount > UPSTREAM_HIGH_WATER) {
+    const raw = data instanceof Buffer ? data : Buffer.from(data);
+    if (getUpstreamQueueSize() >= UPSTREAM_QUEUE_HARD_CAP) {
       droppedMessages++;
-      if (!upstreamPaused) {
-        upstreamPaused = true;
-        socket.pause();
-        console.warn(`[Relay] Upstream paused (buffered: ${(socket.bufferedAmount / 1024 / 1024).toFixed(1)}MB, dropped: ${droppedMessages})`);
-      }
       return;
     }
-    if (upstreamPaused && socket.bufferedAmount < UPSTREAM_LOW_WATER) {
-      upstreamPaused = false;
-      socket.resume();
-      console.log('[Relay] Upstream resumed');
-    }
 
-    messageCount++;
-    if (messageCount % 5000 === 0) {
-      const mem = process.memoryUsage();
-      console.log(`[Relay] ${messageCount} msgs, ${clients.size} ws-clients, ${vessels.size} vessels, dropped=${droppedMessages}, rss=${(mem.rss / 1024 / 1024).toFixed(0)}MB heap=${(mem.heapUsed / 1024 / 1024).toFixed(0)}MB, cache: opensky=${openskyResponseCache.size} rss_feed=${rssResponseCache.size}`);
+    enqueueUpstreamMessage(raw);
+    if (!upstreamPaused && getUpstreamQueueSize() >= UPSTREAM_QUEUE_HIGH_WATER) {
+      upstreamPaused = true;
+      socket.pause();
+      console.warn(`[Relay] Upstream paused (queue=${getUpstreamQueueSize()}, dropped=${droppedMessages})`);
     }
-
-    // Parse upstream JSON — skip toString() + JSON.parse if we can do a quick prefix check
-    const raw = data instanceof Buffer ? data : Buffer.from(data);
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed?.MessageType === 'PositionReport') {
-        processPositionReportForSnapshot(parsed);
-      }
-    } catch {
-      // Ignore malformed upstream payloads
-    }
-
-    // Heavily throttled WS fanout: every 50th message only
-    // The app primarily uses HTTP snapshot polling, WS is for rare external consumers
-    if (clients.size > 0 && messageCount % 50 === 0) {
-      const message = raw.toString();
-      for (const client of clients) {
-        if (client.readyState === WebSocket.OPEN) {
-          // Per-client backpressure: skip if client buffer is backed up
-          if (client.bufferedAmount < 1024 * 1024) {
-            client.send(message);
-          }
-        }
-      }
-    }
+    scheduleUpstreamDrain();
   });
 
   socket.on('close', () => {
     if (upstreamSocket === socket) {
       upstreamSocket = null;
+      clearUpstreamQueue();
+      upstreamPaused = false;
       console.log('[Relay] Disconnected, reconnecting in 5s...');
       setTimeout(connectUpstream, 5000);
     }
