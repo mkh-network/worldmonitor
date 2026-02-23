@@ -52,9 +52,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Humanity Progress Charts Panel
 
-- [ ] **PROG-01**: Long-term trend charts showing human progress: extreme poverty declining, literacy rising, child mortality dropping, life expectancy increasing
-- [ ] **PROG-02**: Data sourced from Our World in Data REST API and World Bank Indicators API
-- [ ] **PROG-03**: D3.js sparkline/area chart visualizations with warm color palette
+- [x] **PROG-01**: Long-term trend charts showing human progress: extreme poverty declining, literacy rising, child mortality dropping, life expectancy increasing
+- [x] **PROG-02**: Data sourced from Our World in Data REST API and World Bank Indicators API
+- [x] **PROG-03**: D3.js sparkline/area chart visualizations with warm color palette
 
 ### Scientific Breakthroughs Ticker
 
@@ -157,9 +157,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COUNT-01 | Phase 5 | Complete |
 | COUNT-02 | Phase 5 | Complete |
 | COUNT-03 | Phase 5 | Complete |
-| PROG-01 | Phase 5 | Pending |
-| PROG-02 | Phase 5 | Pending |
-| PROG-03 | Phase 5 | Pending |
+| PROG-01 | Phase 5 | Complete |
+| PROG-02 | Phase 5 | Complete |
+| PROG-03 | Phase 5 | Complete |
 | SCI-01 | Phase 6 | Pending |
 | SCI-02 | Phase 6 | Pending |
 | HERO-01 | Phase 6 | Pending |

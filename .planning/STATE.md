@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** Every piece of content on the dashboard makes the viewer feel genuinely better about humanity
-**Current focus:** Phase 5 - Humanity Data Panels (1/3 plans done)
+**Current focus:** Phase 5 - Humanity Data Panels (2/3 plans done)
 
 ## Current Position
 
 Phase: 5 of 9 (Humanity Data Panels)
-Plan: 1 of 3 in current phase (05-01 complete)
+Plan: 2 of 3 in current phase (05-02 complete)
 Status: In Progress
-Last activity: 2026-02-23 -- Completed 05-01-PLAN.md (Ticking Counters Service & Panel)
+Last activity: 2026-02-23 -- Completed 05-02-PLAN.md (Progress Charts Panel)
 
-Progress: [###-------] 33%
+Progress: [######----] 67%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
+- Total plans completed: 14
 - Average duration: 12 min
-- Total execution time: 2.7 hours
+- Total execution time: 2.8 hours
 
 **By Phase:**
 
@@ -31,17 +31,18 @@ Progress: [###-------] 33%
 | 02 | 3 | 7 min | 2 min |
 | 03 | 3 | 9 min | 3 min |
 | 04 | 3 | 19 min | 6 min |
-| 05 | 1 | 2 min | 2 min |
+| 05 | 2 | 5 min | 2.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 3m, 4m, 9m, 6m, 2m
-- Trend: Phase 5 started -- plan 01 done in 2m
+- Last 5 plans: 4m, 9m, 6m, 2m, 3m
+- Trend: Phase 5 progressing -- 2 of 3 plans done
 
 *Updated after each plan completion*
 | Phase 04 P01 | 4 | 2 tasks | 9 files |
 | Phase 04 P02 | 9 | 2 tasks | 14 files |
 | Phase 04 P03 | 6 | 2 tasks | 4 files |
 | Phase 05 P01 | 2 | 2 tasks | 2 files |
+| Phase 05 P02 | 3 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,9 @@ Recent decisions affecting current work:
 - [05-01]: Counter values use absolute-time calculation (seconds since midnight UTC * rate) not delta accumulation, preventing drift across tabs/throttling.
 - [05-01]: startTicking() called in constructor for immediate animation start; no separate init step needed.
 - [05-01]: Emoji icons encoded as Unicode escapes in TS source for cross-platform safety.
+- [05-02]: World Bank API as sole primary source for all 4 progress indicators (no OWID in primary flow).
+- [05-02]: papaparse installed but unused in primary flow -- insurance for OWID CSV fallback if needed later.
+- [05-02]: Shared tooltip div across all 4 charts to reduce DOM elements and simplify lifecycle.
 
 ### Pending Todos
 
@@ -106,5 +110,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 05-01-PLAN.md (Ticking Counters Service & Panel)
-Resume file: .planning/phases/05-humanity-data-panels/05-01-SUMMARY.md
+Stopped at: Completed 05-02-PLAN.md (Progress Charts Panel)
+Resume file: .planning/phases/05-humanity-data-panels/05-02-SUMMARY.md
