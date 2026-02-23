@@ -18,7 +18,12 @@
     "summaryText": "Once devastated by DDT pesticide, the Bald Eagle recovered spectacularly after the chemical was banned in 1972 and the species was protected under the Endangered Species Act. Breeding pairs surged from 417 in 1963 to over 71,400 by 2020.",
     "source": "USFWS 2020 Bald Eagle Population Survey",
     "region": "North America",
-    "lastUpdated": "2024-01-15"
+    "lastUpdated": "2024-01-15",
+    "recoveryZone": {
+      "name": "Chesapeake Bay, USA",
+      "lat": 38.5,
+      "lon": -76.4
+    }
   },
   {
     "id": "humpback-whale",
@@ -38,7 +43,12 @@
     "summaryText": "After commercial whaling drove populations to near extinction, the 1966 international whaling moratorium allowed Humpback Whales to stage a remarkable recovery from roughly 5,000 individuals to an estimated 84,000 globally.",
     "source": "NOAA / International Whaling Commission 2024",
     "region": "Global",
-    "lastUpdated": "2024-01-15"
+    "lastUpdated": "2024-01-15",
+    "recoveryZone": {
+      "name": "Hawaii, USA",
+      "lat": 20.8,
+      "lon": -156.3
+    }
   },
   {
     "id": "giant-panda",
@@ -57,7 +67,12 @@
     "summaryText": "China's decades-long investment in habitat corridors and breeding programs lifted the Giant Panda from Endangered to Vulnerable in 2016, with wild populations growing from 1,114 in 1988 to 1,864 in the most recent survey.",
     "source": "WWF / China State Forestry Administration 2015 Census",
     "region": "East Asia",
-    "lastUpdated": "2024-01-15"
+    "lastUpdated": "2024-01-15",
+    "recoveryZone": {
+      "name": "Sichuan, China",
+      "lat": 30.8,
+      "lon": 103.0
+    }
   },
   {
     "id": "southern-white-rhino",
@@ -77,7 +92,12 @@
     "summaryText": "From a mere 50 individuals at the turn of the 20th century, the Southern White Rhino was rescued by South Africa's pioneering conservation efforts and translocation programs, growing to an estimated 16,800 today.",
     "source": "IUCN African Rhino Specialist Group 2024",
     "region": "Southern Africa",
-    "lastUpdated": "2024-01-15"
+    "lastUpdated": "2024-01-15",
+    "recoveryZone": {
+      "name": "Kruger NP, South Africa",
+      "lat": -24.0,
+      "lon": 31.5
+    }
   },
   {
     "id": "gray-wolf",
@@ -97,7 +117,12 @@
     "summaryText": "After being nearly eradicated from the lower 48 US states, Gray Wolves were protected under the Endangered Species Act in 1974. Reintroduction programs, especially in Yellowstone, helped populations rebound to over 6,100.",
     "source": "USFWS Gray Wolf Recovery Program 2023",
     "region": "North America",
-    "lastUpdated": "2024-01-15"
+    "lastUpdated": "2024-01-15",
+    "recoveryZone": {
+      "name": "Yellowstone, USA",
+      "lat": 44.6,
+      "lon": -110.5
+    }
   },
   {
     "id": "peregrine-falcon",
@@ -116,7 +141,12 @@
     "summaryText": "Like the Bald Eagle, Peregrine Falcon populations collapsed due to DDT. Captive breeding and release programs, combined with the pesticide ban, helped North American breeding pairs recover from 324 in 1975 to an estimated 3,000 by 2015.",
     "source": "The Peregrine Fund / USFWS Delisting Report",
     "region": "North America",
-    "lastUpdated": "2024-01-15"
+    "lastUpdated": "2024-01-15",
+    "recoveryZone": {
+      "name": "Rocky Mountains, USA",
+      "lat": 39.7,
+      "lon": -105.2
+    }
   },
   {
     "id": "american-alligator",
@@ -136,7 +166,12 @@
     "summaryText": "Listed as endangered in 1967 due to unregulated hunting and habitat loss, the American Alligator is one of the first major success stories of the Endangered Species Act, recovering from 100,000 to over 5 million across the southeastern United States.",
     "source": "USFWS National Wildlife Refuge System",
     "region": "North America",
-    "lastUpdated": "2024-01-15"
+    "lastUpdated": "2024-01-15",
+    "recoveryZone": {
+      "name": "Everglades, USA",
+      "lat": 25.3,
+      "lon": -80.9
+    }
   },
   {
     "id": "arabian-oryx",
@@ -156,7 +191,12 @@
     "summaryText": "Declared extinct in the wild in 1972, the Arabian Oryx was brought back through a pioneering captive breeding and reintroduction program led by the Phoenix Zoo and Arabian Gulf states. It was the first species to revert from Extinct in the Wild to Vulnerable on the IUCN Red List.",
     "source": "Environment Agency Abu Dhabi / IUCN 2023",
     "region": "Arabian Peninsula",
-    "lastUpdated": "2024-01-15"
+    "lastUpdated": "2024-01-15",
+    "recoveryZone": {
+      "name": "Abu Dhabi, UAE",
+      "lat": 24.2,
+      "lon": 55.5
+    }
   },
   {
     "id": "california-condor",
@@ -176,7 +216,12 @@
     "summaryText": "With only 22 individuals left in 1982, all California Condors were captured for an emergency breeding program. Decades of careful reintroduction have raised the population to 561, though the species remains critically endangered.",
     "source": "USFWS California Condor Recovery Program 2024",
     "region": "Western North America",
-    "lastUpdated": "2024-01-15"
+    "lastUpdated": "2024-01-15",
+    "recoveryZone": {
+      "name": "Grand Canyon, USA",
+      "lat": 36.1,
+      "lon": -112.1
+    }
   },
   {
     "id": "mountain-gorilla",
@@ -196,6 +241,11 @@
     "summaryText": "Thanks to community-based conservation, anti-poaching patrols, and veterinary intervention led by the Dian Fossey Gorilla Fund and local governments, Mountain Gorilla populations more than quadrupled from 254 in 1981 to 1,063 in 2021.",
     "source": "Greater Virunga Transboundary Collaboration 2021 Census",
     "region": "East Africa",
-    "lastUpdated": "2024-01-15"
+    "lastUpdated": "2024-01-15",
+    "recoveryZone": {
+      "name": "Virunga, DRC/Rwanda",
+      "lat": -1.5,
+      "lon": 29.5
+    }
   }
 ]
