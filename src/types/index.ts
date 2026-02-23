@@ -27,6 +27,8 @@ export interface NewsItem {
   lang?: string;
   // Happy variant: positive content category
   happyCategory?: import('@/services/positive-classifier').HappyContentCategory;
+  // Image URL extracted from RSS media/enclosure tags
+  imageUrl?: string;
 }
 
 export type VelocityLevel = 'normal' | 'elevated' | 'spike';
