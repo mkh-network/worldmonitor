@@ -50,6 +50,39 @@ export async function setCachedJson(key: string, value: unknown, ttlSeconds: num
 }
 
 /**
+ * Batch GET using Upstash pipeline API — single HTTP round-trip for N keys.
+ * Returns a Map of key → parsed JSON value (missing/failed keys omitted).
+ */
+export async function getCachedJsonBatch(keys: string[]): Promise<Map<string, unknown>> {
+  const result = new Map<string, unknown>();
+  if (keys.length === 0) return result;
+
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return result;
+
+  try {
+    const pipeline = keys.map((k) => ['GET', prefixKey(k)]);
+    const resp = await fetch(`${url}/pipeline`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(pipeline),
+      signal: AbortSignal.timeout(3_000),
+    });
+    if (!resp.ok) return result;
+
+    const data = (await resp.json()) as Array<{ result?: string }>;
+    for (let i = 0; i < keys.length; i++) {
+      const raw = data[i]?.result;
+      if (raw) {
+        try { result.set(keys[i]!, JSON.parse(raw)); } catch { /* skip malformed */ }
+      }
+    }
+  } catch { /* best-effort */ }
+  return result;
+}
+
+/**
  * In-flight request coalescing map.
  * When multiple concurrent requests hit the same cache key during a miss,
  * only the first triggers the upstream fetch — others await the same promise.
