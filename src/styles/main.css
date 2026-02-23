@@ -14170,15 +14170,16 @@ body.has-critical-banner .panels-grid {
     grid-template-columns: 60% 1fr;
     grid-template-rows: 1fr;
     gap: 4px;
-    overflow-y: auto;
+    overflow: hidden;
   }
 
   .map-section {
     grid-column: 1;
     grid-row: 1;
     height: auto;
-    min-height: 320px;
+    min-height: 0;
     max-height: none;
+    overflow: hidden;
   }
 
   .map-section.pinned {
@@ -14192,6 +14193,7 @@ body.has-critical-banner .panels-grid {
   .panels-grid {
     grid-column: 2;
     grid-row: 1;
+    min-height: 0;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     grid-auto-rows: minmax(200px, 380px);
     align-content: start;

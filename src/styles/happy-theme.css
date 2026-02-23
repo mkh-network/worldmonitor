@@ -521,7 +521,7 @@
   min-height: 1.2em;
   overflow: hidden;
   text-overflow: ellipsis;
-  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 [data-variant='happy'] .counter-label {
@@ -536,9 +536,8 @@
 
 [data-variant='happy'] .counter-source {
   font-size: 0.65rem;
-  color: var(--text-tertiary, var(--text-secondary));
+  color: var(--text-dim);
   margin-top: 4px;
-  opacity: 0.7;
 }
 
 /* ==========================================================
@@ -675,6 +674,9 @@
 
 [data-variant="happy"] .ticker-item-title {
   color: var(--text);
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ==========================================================
@@ -820,8 +822,7 @@
 
 [data-variant="happy"] .digest-card-source {
   font-size: 0.7rem;
-  color: var(--text-muted);
-  opacity: 0.7;
+  color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -832,6 +833,10 @@
   opacity: 0.85;
   line-height: 1.4;
   margin: 0.25rem 0 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 [data-variant="happy"] .digest-card-summary--loading {
@@ -906,7 +911,7 @@
 }
 
 [data-variant='happy'] .species-info {
-  padding: 8px 12px 4px;
+  padding: 8px 12px;
 }
 
 [data-variant='happy'] .species-name {
@@ -989,6 +994,10 @@
   color: var(--text);
   margin: 0 0 4px;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 [data-variant='happy'] .species-source {
