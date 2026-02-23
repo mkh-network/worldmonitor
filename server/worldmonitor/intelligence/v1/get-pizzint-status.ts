@@ -37,10 +37,8 @@ export async function getPizzintStatus(
   const cached = (await getCachedJson(cacheKey)) as GetPizzintStatusResponse | null;
   if (cached?.pizzint) return cached;
 
-  // Fetch PizzINT dashboard data — throw on failure so sidecar returns non-OK
-  // and the runtime fetch patch falls back to cloud
   let pizzint: PizzintStatus | undefined;
-  {
+  try {
     const resp = await fetch(PIZZINT_API, {
       headers: { Accept: 'application/json', 'User-Agent': CHROME_UA },
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
@@ -114,6 +112,7 @@ export async function getPizzintStatus(
         };
       }
     }
+  } catch { /* PizzINT unavailable — continue to GDELT */ }
 
   // Fetch GDELT tension pairs
   let tensionPairs: GdeltTensionPair[] = [];

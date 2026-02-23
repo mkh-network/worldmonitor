@@ -355,11 +355,21 @@ export async function listTechEvents(
   try {
     const cacheKey = `${REDIS_CACHE_KEY}:${req.type || 'all'}:${req.mappable ? 1 : 0}:${req.days || 0}`;
     const cached = (await getCachedJson(cacheKey)) as ListTechEventsResponse | null;
-    if (cached?.events?.length) return cached;
+    if (cached?.events?.length) {
+      if (req.limit > 0 && cached.events.length > req.limit) {
+        const sliced = cached.events.slice(0, req.limit);
+        return { ...cached, events: sliced, count: sliced.length };
+      }
+      return cached;
+    }
 
-    const result = await fetchTechEvents(req);
+    const result = await fetchTechEvents({ ...req, limit: 0 });
     if (result.events.length > 0) {
       setCachedJson(cacheKey, result, REDIS_CACHE_TTL).catch(() => {});
+    }
+    if (req.limit > 0 && result.events.length > req.limit) {
+      const sliced = result.events.slice(0, req.limit);
+      return { ...result, events: sliced, count: sliced.length };
     }
     return result;
   } catch (error) {
