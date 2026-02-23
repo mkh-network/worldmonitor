@@ -74,9 +74,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Species Comeback Tracker Panel
 
-- [ ] **SPECIES-01**: Wildlife conservation wins displayed as cards with species photo, population trend sparkline, and recovery status badge
-- [ ] **SPECIES-02**: Data sourced from IUCN Red List data and conservation reports
-- [ ] **SPECIES-03**: Monthly update cadence with historical population trend data
+- [x] **SPECIES-01**: Wildlife conservation wins displayed as cards with species photo, population trend sparkline, and recovery status badge
+- [x] **SPECIES-02**: Data sourced from IUCN Red List data and conservation reports
+- [x] **SPECIES-03**: Monthly update cadence with historical population trend data
 
 ### Renewable Energy Growth Tracker Panel
 
@@ -167,9 +167,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | HERO-03 | Phase 6 | Complete |
 | DIGEST-01 | Phase 6 | Complete |
 | DIGEST-02 | Phase 6 | Complete |
-| SPECIES-01 | Phase 7 | Pending |
-| SPECIES-02 | Phase 7 | Pending |
-| SPECIES-03 | Phase 7 | Pending |
+| SPECIES-01 | Phase 7 | Complete |
+| SPECIES-02 | Phase 7 | Complete |
+| SPECIES-03 | Phase 7 | Complete |
 | ENERGY-01 | Phase 7 | Complete |
 | ENERGY-02 | Phase 7 | Complete |
 | ENERGY-03 | Phase 7 | Complete |
