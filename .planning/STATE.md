@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** Every piece of content on the dashboard makes the viewer feel genuinely better about humanity
-**Current focus:** Phase 9 - Sharing, TV Mode & Polish (1/3 plans done)
+**Current focus:** Phase 9 - Sharing, TV Mode & Polish (2/3 plans done)
 
 ## Current Position
 
 Phase: 09 (Sharing, TV Mode & Polish)
-Plan: 2 of 3 in current phase (09-02 complete)
+Plan: 2 of 3 in current phase (09-01 + 09-02 complete)
 Status: In Progress
-Last activity: 2026-02-23 -- Completed 09-02-PLAN.md (TV Mode)
+Last activity: 2026-02-23 -- Completed 09-01-PLAN.md (Positive News Share Cards)
 
-Progress: [########--] 80%
+Progress: [########--] 85%
 
 ## Performance Metrics
 
@@ -145,6 +145,10 @@ Recent decisions affecting current work:
 - [71-02]: setCapacityData appends to existing content instead of replacing, allowing gauge and capacity chart to coexist.
 - [71-02]: Coal rendered as area+line overlay on same y-axis for direct scale comparison with renewables.
 - [71-02]: EIA capacity fetch wrapped in separate try/catch so World Bank gauge always renders even if EIA fails.
+- [09-01]: Text-only share cards (no RSS images) to avoid cross-origin canvas tainting -- gradients provide visual richness.
+- [09-01]: 1080x1080 square format optimized for Instagram, WhatsApp, LinkedIn, Twitter without cropping.
+- [09-01]: Delegated click handler on content div with data-idx mapping to items array for efficient event handling.
+- [09-01]: Share button hidden by default (opacity: 0), revealed on card hover for clean UI.
 - [09-02]: CSS-only ambient particles at opacity 0.04 with ::before/::after pseudo-elements -- no JS particle library needed.
 - [09-02]: TvModeController instantiated lazily on first toggle to avoid unnecessary allocation.
 - [09-02]: Panel cycling uses CSS class toggling (tv-hidden/tv-active) not DOM removal -- preserves panel state.
@@ -162,5 +166,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 09-02-PLAN.md (TV Mode)
-Resume file: .planning/phases/09-sharing-tv-mode-polish/09-02-SUMMARY.md
+Stopped at: Completed 09-01-PLAN.md (Positive News Share Cards) -- 09-01 + 09-02 done, 09-03 remaining
+Resume file: .planning/phases/09-sharing-tv-mode-polish/09-01-SUMMARY.md

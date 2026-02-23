@@ -91,9 +91,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Shareable Story Cards
 
-- [ ] **SHARE-01**: One-tap generation of branded image cards for sharing positive stories on social media
-- [ ] **SHARE-02**: Canvas/SVG rendering with headline, category badge, warm gradient background, HappyMonitor branding
-- [ ] **SHARE-03**: Export as PNG with watermark
+- [x] **SHARE-01**: One-tap generation of branded image cards for sharing positive stories on social media
+- [x] **SHARE-02**: Canvas/SVG rendering with headline, category badge, warm gradient background, HappyMonitor branding
+- [x] **SHARE-03**: Export as PNG with watermark
 
 ### Ambient / TV Mode
 
@@ -175,9 +175,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ENERGY-03 | Phase 7.1 | Complete |
 | KIND-01 | Phase 4 | Complete |
 | KIND-02 | Phase 4 | Complete |
-| SHARE-01 | Phase 9 | Pending |
-| SHARE-02 | Phase 9 | Pending |
-| SHARE-03 | Phase 9 | Pending |
+| SHARE-01 | Phase 9 | Complete |
+| SHARE-02 | Phase 9 | Complete |
+| SHARE-03 | Phase 9 | Complete |
 | TV-01 | Phase 9 | Complete |
 | TV-02 | Phase 9 | Complete |
 | TV-03 | Phase 9 | Complete |
