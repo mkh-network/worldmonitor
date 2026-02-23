@@ -131,11 +131,12 @@ Plans:
   2. Species data is sourced from IUCN Red List data and conservation reports, updated monthly with historical population trends
   3. A renewable energy panel visualizes solar/wind installations growing and coal plants closing
   4. An animated gauge shows global renewable energy percentage climbing with a regional breakdown, using IEA and existing EIA API data
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
+- [ ] 07-01-PLAN.md -- Conservation wins static data + SpeciesComebackPanel with D3 sparklines (SPECIES-01, SPECIES-02, SPECIES-03)
+- [ ] 07-02-PLAN.md -- Renewable energy data service + RenewableEnergyPanel with D3 arc gauge (ENERGY-01, ENERGY-02, ENERGY-03)
+- [ ] 07-03-PLAN.md -- App.ts panel wiring, happy.ts config, and happy-theme.css styling (all requirements)
 
 ### Phase 8: Map Data Overlays
 **Goal**: The map gains choropleth and overlay layers for world happiness, species recovery zones, and renewable energy installations
