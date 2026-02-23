@@ -11,7 +11,7 @@
  * requirement for IEA-sourced data without needing IEA's paid API.
  */
 
-import { getIndicatorData } from '@/services/economic';
+import { getIndicatorData, fetchEnergyCapacityRpc } from '@/services/economic';
 
 // ---- Types ----
 
@@ -144,5 +144,38 @@ export async function fetchRenewableEnergyData(): Promise<RenewableEnergyData> {
   } catch {
     // Complete failure -- return empty/zeroed data
     return EMPTY_DATA;
+  }
+}
+
+// ========================================================================
+// EIA Installed Capacity (solar, wind, coal)
+// ========================================================================
+
+export interface CapacityDataPoint {
+  year: number;
+  capacityMw: number;
+}
+
+export interface CapacitySeries {
+  source: string;   // 'SUN', 'WND', 'COL'
+  name: string;     // 'Solar', 'Wind', 'Coal'
+  data: CapacityDataPoint[];
+}
+
+/**
+ * Fetch installed generation capacity for solar, wind, and coal from EIA.
+ * Returns typed CapacitySeries[] ready for panel rendering.
+ * Gracefully degrades: on failure returns empty array.
+ */
+export async function fetchEnergyCapacity(): Promise<CapacitySeries[]> {
+  try {
+    const resp = await fetchEnergyCapacityRpc(['SUN', 'WND', 'COL'], 25);
+    return resp.series.map(s => ({
+      source: s.energySource,
+      name: s.name,
+      data: s.data.map(d => ({ year: d.year, capacityMw: d.capacityMw })),
+    }));
+  } catch {
+    return [];
   }
 }
