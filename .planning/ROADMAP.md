@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Humanity Data Panels** - Live ticking counters and long-term progress charts showing humanity getting better (completed 2026-02-23)
 - [x] **Phase 6: Content Spotlight Panels** - Scientific breakthroughs ticker, today's best human spotlight, and daily digest (completed 2026-02-23)
 - [ ] **Phase 7: Conservation & Energy Trackers** - Species comeback cards and renewable energy growth visualizations
-- [ ] **Phase 8: Map Data Overlays** - World happiness heatmap, species recovery zones, and renewable energy installation layers
+- [x] **Phase 8: Map Data Overlays** - World happiness heatmap, species recovery zones, and renewable energy installation layers (completed 2026-02-23)
 - [ ] **Phase 9: Sharing, TV Mode & Polish** - Shareable story cards, full-screen ambient mode, and celebration animations
 
 ## Phase Details
@@ -185,5 +185,5 @@ Note: Phases 4, 5, 6, 7 can partially parallelize after Phase 2 completes (they 
 | 5. Humanity Data Panels | 0/3 | Complete    | 2026-02-23 |
 | 6. Content Spotlight Panels | 0/3 | Complete    | 2026-02-23 |
 | 7. Conservation & Energy Trackers | 0/2 | Not started | - |
-| 8. Map Data Overlays | 0/2 | Not started | - |
+| 8. Map Data Overlays | 0/2 | Complete    | 2026-02-23 |
 | 9. Sharing, TV Mode & Polish | 0/3 | Not started | - |
