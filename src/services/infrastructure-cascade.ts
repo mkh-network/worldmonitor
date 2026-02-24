@@ -214,7 +214,7 @@ function normalizeCountryCode(country: string): string {
     'Yemen': 'YE', 'Panama': 'PA', 'Spain': 'ES', 'Pakistan': 'PK',
     'Sri Lanka': 'LK', 'Japan': 'JP', 'UK': 'GB', 'France': 'FR',
     'Brazil': 'BR', 'India': 'IN', 'Singapore': 'SG', 'Germany': 'DE',
-    'UAE': 'AE',
+    'UAE': 'AE', 'Mexico': 'MX',
   };
   return mappings[country] || country;
 }

@@ -80,6 +80,11 @@ export const PORTS: Port[] = [
   { id: 'nhava_sheva', name: 'Nhava Sheva (JNPT)', lat: 18.95, lon: 72.95, country: 'India', type: 'container', note: "India's busiest container port. Mumbai gateway. 6M+ TEU." },
   { id: 'chennai', name: 'Port of Chennai', lat: 13.10, lon: 80.29, country: 'India', type: 'container', note: "India's 2nd largest. Auto industry. Bay of Bengal." },
   { id: 'mundra', name: 'Mundra Port', lat: 22.73, lon: 69.72, country: 'India', type: 'mixed', note: "India's largest private port. Adani Group." },
+
+  // Mexico
+  { id: 'manzanillo', name: 'Port of Manzanillo', lat: 19.05, lon: -104.32, country: 'Mexico', type: 'container', note: "Mexico's busiest port. Pacific gateway. USMCA trade corridor. 3M+ TEU." },
+  { id: 'lazaro_cardenas', name: 'Lazaro Cardenas', lat: 17.94, lon: -102.18, country: 'Mexico', type: 'mixed', note: "Mexico's 2nd largest. Pacific deep-water. Asia-Mexico trade. Auto/steel exports." },
+  { id: 'veracruz', name: 'Port of Veracruz', lat: 19.20, lon: -96.13, country: 'Mexico', type: 'mixed', note: "Mexico's oldest and largest Gulf port. Auto imports. US-Mexico trade." },
 ];
 
 export function getPortsByType(type: PortType): Port[] {
