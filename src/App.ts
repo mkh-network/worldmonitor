@@ -2363,6 +2363,10 @@ export class App {
       this.panels[panelKey] = panel;
     }
 
+    // Global Giving panel (all variants)
+    const givingPanel = new GivingPanel();
+    this.panels['giving'] = givingPanel;
+
     // Geopolitical-only panels (not needed for tech variant)
     if (SITE_VARIANT === 'full') {
       const gdeltIntelPanel = new GdeltIntelPanel();
@@ -2398,9 +2402,6 @@ export class App {
         this.map?.setCenter(lat, lon, 5);
       });
       this.panels['ucdp-events'] = ucdpEventsPanel;
-
-      const givingPanel = new GivingPanel();
-      this.panels['giving'] = givingPanel;
 
       const displacementPanel = new DisplacementPanel();
       displacementPanel.setCountryClickHandler((lat, lon) => {
@@ -3401,6 +3402,21 @@ export class App {
         }),
       });
     }
+    // Global giving activity data (all variants)
+    tasks.push({
+      name: 'giving',
+      task: runGuarded('giving', async () => {
+        const givingResult = await fetchGivingSummary();
+        if (!givingResult.ok) {
+          dataFreshness.recordError('giving', 'Giving data unavailable (retaining prior state)');
+          return;
+        }
+        const data = givingResult.data;
+        (this.panels['giving'] as GivingPanel)?.setData(data);
+        if (data.platforms.length > 0) dataFreshness.recordUpdate('giving', data.platforms.length);
+      }),
+    });
+
     if (SITE_VARIANT !== 'happy' && this.mapLayers.weather) tasks.push({ name: 'weather', task: runGuarded('weather', () => this.loadWeatherAlerts()) });
     if (SITE_VARIANT !== 'happy' && this.mapLayers.ais) tasks.push({ name: 'ais', task: runGuarded('ais', () => this.loadAisSignals()) });
     if (SITE_VARIANT !== 'happy' && this.mapLayers.cables) tasks.push({ name: 'cables', task: runGuarded('cables', () => this.loadCableActivity()) });
@@ -4359,23 +4375,6 @@ export class App {
       } catch (error) {
         console.error('[Intelligence] UCDP events fetch failed:', error);
         dataFreshness.recordError('ucdp_events', String(error));
-      }
-    })());
-
-    // Fetch global giving activity data
-    tasks.push((async () => {
-      try {
-        const givingResult = await fetchGivingSummary();
-        if (!givingResult.ok) {
-          dataFreshness.recordError('giving', 'Giving data unavailable (retaining prior state)');
-          return;
-        }
-        const data = givingResult.data;
-        (this.panels['giving'] as GivingPanel)?.setData(data);
-        if (data.platforms.length > 0) dataFreshness.recordUpdate('giving', data.platforms.length);
-      } catch (error) {
-        console.error('[Intelligence] Global giving fetch failed:', error);
-        dataFreshness.recordError('giving', String(error));
       }
     })());
 
