@@ -2417,11 +2417,11 @@ export class DeckGLMap {
       }
     };
 
-    // Label truncation scales with zoom: 30 chars at global, full text when zoomed in
-    const maxLen = zoom < 4 ? 30 : zoom < 6 ? 50 : zoom < 8 ? 80 : 200;
+    // Truncate label based on zoom: short at global, full when zoomed in
+    const maxChars = zoom < 3 ? 20 : zoom < 5 ? 35 : zoom < 7 ? 60 : Infinity;
     const getLabel = (d: PositiveGeoEvent): string => {
       const emoji = getCategoryEmoji(d.category);
-      const name = d.name.length > maxLen ? d.name.slice(0, maxLen - 1) + '\u2026' : d.name;
+      const name = d.name.length > maxChars ? d.name.slice(0, maxChars - 2) + '\u2026' : d.name;
       return `${emoji} ${name}`;
     };
 
@@ -2446,7 +2446,7 @@ export class DeckGLMap {
         data: labeledEvents,
         getPosition: (d: PositiveGeoEvent) => [d.lon, d.lat],
         getText: getLabel,
-        getSize: zoom < 3 ? 11 : zoom < 6 ? 12 : 13,
+        getSize: zoom < 3 ? 11 : 12,
         getColor: [255, 255, 255, 255],
         getPixelOffset: [0, -16],
         background: true,
@@ -2458,7 +2458,7 @@ export class DeckGLMap {
         outlineWidth: 0,
         billboard: true,
         sizeUnits: 'pixels' as const,
-        updateTriggers: { getText: maxLen },
+        updateTriggers: { getText: maxChars },
       }));
     }
 
@@ -2505,16 +2505,16 @@ export class DeckGLMap {
     }));
 
     // Text labels — expand with zoom
-    const maxLen = zoom < 4 ? 30 : zoom < 6 ? 50 : zoom < 8 ? 80 : 200;
+    const maxChars = zoom < 3 ? 20 : zoom < 5 ? 35 : zoom < 7 ? 60 : Infinity;
     layers.push(new TextLayer<KindnessPoint>({
       id: 'kindness-labels',
       data: this.kindnessPoints,
       getPosition: (d: KindnessPoint) => [d.lon, d.lat],
       getText: (d: KindnessPoint) => {
-        const name = d.name.length > maxLen ? d.name.slice(0, maxLen - 1) + '\u2026' : d.name;
+        const name = d.name.length > maxChars ? d.name.slice(0, maxChars - 2) + '\u2026' : d.name;
         return `\u{1F49A} ${name}`;
       },
-      getSize: zoom < 3 ? 11 : zoom < 6 ? 12 : 13,
+      getSize: 11,
       getColor: [255, 255, 255, 255],
       getPixelOffset: [0, -16],
       background: true,
@@ -2525,7 +2525,7 @@ export class DeckGLMap {
       pickable: false,
       billboard: true,
       sizeUnits: 'pixels' as const,
-      updateTriggers: { getText: maxLen },
+      updateTriggers: { getText: maxChars },
     }));
 
     // Pulse for real events
