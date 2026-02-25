@@ -1,7 +1,7 @@
 FROM ghcr.io/railwayapp/function-bun:1.3.0
 
 WORKDIR /app
-COPY ./ais-relay.cjs ./index.tsx
+COPY ./ais-relay.cjs .
 RUN ["bun","install","ws"]
 
 ENV AISSTREAM_API_KEY=f77839d374dbaf19eeaa76003447c1184b308522
